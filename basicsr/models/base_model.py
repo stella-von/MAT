@@ -6,7 +6,6 @@ from copy import deepcopy
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 from basicsr.models import lr_scheduler as lr_scheduler
-from basicsr.optimizers.adan import Adan
 from basicsr.utils import get_root_logger
 from basicsr.utils.dist_util import master_only
 
@@ -105,9 +104,7 @@ class BaseModel():
         return net
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-        if optim_type == 'Adan':
-            optimizer = Adan(params, lr, **kwargs)
-        elif optim_type == 'Adam':
+        if optim_type == 'Adam':
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type == 'AdamW':
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
