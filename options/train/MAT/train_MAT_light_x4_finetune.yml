@@ -1,0 +1,152 @@
+# general settings
+name: MAT_light_x4_finetune_from_x2
+model_type: SRModel
+scale: 4
+num_gpu: auto
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: DIV2K
+    type: PairedImageDataset
+    # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub
+    # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub
+    # meta_info_file: basicsr/data/meta_info/meta_info_DIV2K800sub_GT.txt
+    # (for lmdb)
+    dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
+    dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
+
+    io_backend:
+      # type: disk
+      # (for lmdb)
+      type: lmdb
+
+    gt_size: 256
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 8
+    dataset_enlarge_ratio: 1
+    prefetch_mode: cuda
+    pin_memory: true
+
+  val_1:
+    name: Set5
+    type: PairedImageDataset
+    dataroot_gt: datasets/Set5/GTmod4
+    dataroot_lq: datasets/Set5/LRbicx4
+    io_backend:
+      type: disk
+
+  val_2:
+    name: Set14
+    type: PairedImageDataset
+    dataroot_gt: datasets/Set14/GTmod4
+    dataroot_lq: datasets/Set14/LRbicx4
+    io_backend:
+      type: disk
+
+  val_3:
+    name: BSD100
+    type: PairedImageDataset
+    dataroot_gt: datasets/BSD100/GTmod4
+    dataroot_lq: datasets/BSD100/LRbicx4
+    io_backend:
+      type: disk
+
+  val_4:
+    name: Urban100
+    type: PairedImageDataset
+    dataroot_gt: datasets/Urban100/GTmod4
+    dataroot_lq: datasets/Urban100/LRbicx4
+    io_backend:
+      type: disk
+
+  val_5:
+    name: Manga109
+    type: PairedImageDataset
+    dataroot_gt: datasets/Manga109/GTmod4
+    dataroot_lq: datasets/Manga109/LRbicx4
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: MAT
+  num_in_ch: 3
+  num_out_ch: 3
+  num_feat: 60
+  num_block: 4
+  expanded_ratio: 1
+  squeeze_factor: 4
+  depth: 4
+  num_head: 6
+  kernel_sizes: [7, 9, 11]
+  dilations: [[1, 1, 1], [9, 7, 5]]
+  rel_pos_bias: true
+  dw_sizes: [1, 3, 5, 7]
+  upscale: 4
+  upsampler: 'pixelshuffledirect'
+
+# path
+path:
+  pretrain_network_g: experiments/MAT_light_x2_from_scratch/models/net_g_latest.pth
+  strict_load_g: false
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [125000, 200000, 225000, 240000]
+    gamma: 0.5
+
+  total_iter: 250000
+  warmup_iter: -1
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: !!float 5e3
+  save_img: false
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: true
+      better: higher  # the higher, the better. Default: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: true
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 5e3
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
