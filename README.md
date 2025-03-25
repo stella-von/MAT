@@ -1,4 +1,4 @@
-# 📖 MAT
+# 📖 MAT (TCSVT)
 
 ### MAT: Multi-Range Attention Transformer for Efficient Image Super-Resolution [[Paper Link]](https://arxiv.org/pdf/2411.17214)
 
